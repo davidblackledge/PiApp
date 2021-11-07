@@ -1,0 +1,26 @@
+﻿<Window x:Class="PiApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PiApp"
+        mc:Ignorable="d"
+        Title="Pi Poetry" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <ToolBar Grid.Row="0">
+            <Button Command="{Binding SavePoemCommand}" CommandParameter="{Binding}" Content="💾 Save Poem"/>
+            <Button Command="{Binding LoadPoemCommand}" CommandParameter="{Binding}" Content="📂 Load Poem"/>
+            <Button Command="{Binding ClearPoemCommand}" CommandParameter="{Binding}" Content="❌ Clear"/>
+        </ToolBar>
+        <GroupBox Grid.Row="1" Header="Editor" Name="editor">
+        <FlowDocumentReader Document="{Binding Document}" Name="reader" FontFamily="fixed">
+
+        </FlowDocumentReader>
+        </GroupBox>
+
+    </Grid>
+</Window>
