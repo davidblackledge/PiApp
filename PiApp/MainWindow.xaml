@@ -20,12 +20,12 @@
             <Button Command="{Binding LoadPoemCommand}" CommandParameter="{Binding}" Content="📂 Load Poem" ToolTip="(Ctrl+O) Clear poem and load from a text file"/>
             <Button Command="{Binding LoadPoemOverlayCommand}" CommandParameter="{Binding}" Content="➕ Overlay Load" ToolTip="Load poem without clearing later lines"/>
             <Separator/>
-            <Button Command="{Binding ClearPoemCommand}" CommandParameter="{Binding}" Content="❌ Clear" ToolTip="Change Formatting"/>
+            <Button Command="{Binding ClearPoemCommand}" CommandParameter="{Binding}" Content="❌ Clear" ToolTip="Deletes all words"/>
             <Separator/>
             <ToggleButton IsChecked="{Binding IsZeroFullStop}"
                           Command="{Binding ToggleZeroSettingCommand}" CommandParameter="{Binding}" Content="↹ Zeros are .!?" ToolTip="Rule used for a zero: full stop punctuation or 10-letter word"/>
             <ToggleButton IsChecked="{Binding IsTitled}"
-                          Command="{Binding ToggleTitleSettingCommand}" CommandParameter="{Binding}" Content="⚙ Title Display"/>
+                          Command="{Binding ToggleTitleSettingCommand}" CommandParameter="{Binding}" Content="⚙ Title Display" ToolTip="Change Formatting"/>
         </ToolBar>
         <GroupBox Grid.Row="1" Header="Editor" Name="editor">
             <FlowDocumentReader Document="{Binding Document}" Name="reader" FontFamily="fixed" ViewingMode="Scroll">
