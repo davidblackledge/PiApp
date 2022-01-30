@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 
@@ -19,8 +18,12 @@ namespace PiApp
             get; set;
         }
         //public RichTextBox RichTextBox { get; private set; }
-        public ICommand LoadPoemCommand { get; } = new RelayCommand<MainWindowViewModel>(
+        public ICommand LoadPoemOverlayCommand { get; } = new RelayCommand<MainWindowViewModel>(
             (MainWindowViewModel model) => ProcessTextFile(new OpenFileDialog(), (filename) => model.LoadPoemFromFile(filename))
+            );
+
+        public ICommand LoadPoemCommand { get; } = new RelayCommand<MainWindowViewModel>(
+            (MainWindowViewModel model) => ProcessTextFile(new OpenFileDialog(), (filename) => model.ClearAndLoadPoemFromFile(filename))
             );
 
         public ICommand SavePoemCommand { get; } = new RelayCommand<MainWindowViewModel>(
@@ -31,17 +34,40 @@ namespace PiApp
             (MainWindowViewModel model) => model.Clear()
             );
 
+        public ICommand ToggleZeroSettingCommand { get; } = new RelayCommand<MainWindowViewModel>(
+            (MainWindowViewModel model) => model.ZeroMeaningWasToggled()
+            );
+
+        public ICommand ToggleTitleSettingCommand { get; } = new RelayCommand<MainWindowViewModel>(
+            (MainWindowViewModel model) => model.TitleMeaningWasToggled()
+            );
+
+        public bool IsZeroFullStop { get; set; }
+
+        public bool IsTitled { get; set; }
+
         private RunDigit title;
 
         public MainWindowViewModel()
         {
+            IsZeroFullStop = true;
+            IsTitled = true;
             Document = new FlowDocument();
             //RichTextBox = new RichTextBox(Document);
             //RichTextBox.SpellCheck.IsEnabled = true;
 
             BuildDocument();
         }
-        public void BuildDocument() { 
+        public void BuildDocument()
+        {
+            LoadDigits();
+
+            LoadPoemFromString(DefaultPoemWithStops());
+
+        }
+
+        private void LoadDigits()
+        {
             //            3.
             CreateTitle(3);
 
@@ -83,41 +109,44 @@ namespace PiApp
             // my code splits on 0's and assumes a 0 at end of every string in split, so can't end on a 0 because split creates empty string and code acts like there were two 0's at the end.
             //"01989" + // 1000 digits
             "");
-
-            LoadPoemFromString(new StringBuilder()
-                .AppendLine("Pie")
-                .AppendLine()
-                .AppendLine("I have a treat " +
-                "comprised of tastes salty and sweet, " +
-                "lovingly completed, " +
-                "causing droolings for my lip, " +
-                "diameter near excess so eating adds the hip " +
-                "diameter and so filling reaffirms peace.")
-                .AppendLine("No rational desserts (like a chocolate) provide a demand emulating the sugarplum pleasures now begging “shall I?”")
-                .AppendLine("Baked infinity, no!")
-                .AppendLine("Universes without pie’s immanence must know every existence to end.")
-                .AppendLine("Dessert, treasure a rotten life.")
-                .ToString());
-
         }
 
         private void CreateTitle(int length)
         {
-            title = new RunDigit(length);
+            title = NewRunDigitOrStop(length);
 
             Paragraph titleParagraph = new Paragraph(title);
-            titleParagraph.FontSize = 25;
-            titleParagraph.TextAlignment = System.Windows.TextAlignment.Center;
             Document.Blocks.Add(titleParagraph);
 
-            Paragraph separator = new Paragraph(new Run("___________"));
-            separator.TextAlignment = System.Windows.TextAlignment.Center;
+            Paragraph separator = new Paragraph();
             Document.Blocks.Add(separator);
+
+            if (IsTitled)
+            {
+                titleParagraph.FontSize = 25;
+                titleParagraph.TextAlignment = System.Windows.TextAlignment.Center;
+
+                separator.Inlines.Add(new Run("___________"));
+                separator.TextAlignment = System.Windows.TextAlignment.Center;
+            }
+            else
+            {
+                titleParagraph.Margin = new System.Windows.Thickness();
+                separator.Margin = new System.Windows.Thickness();
+            }
+        }
+
+        private RunDigit NewRunDigitOrStop(int length)
+        {
+            if (IsZeroFullStop)
+                return new RunDigitOrStop(length);
+            else
+                return new RunDigit(length);
         }
 
         private void CreateParagraphsForDigits(string v)
         {
-            string[] paragraphs = v.Split(RunDigit.StopDigitLengthChar);
+            string[] paragraphs = v.Split(RunDigitOrStop.StopDigitLengthChar);
             foreach (string p in paragraphs)
                 CreateParagraphForDigits(p);
         }
@@ -128,13 +157,16 @@ namespace PiApp
             //main.FontFamily = new System.Windows.Media.FontFamily("Fixed");
             foreach (char c in p)
                 CreateRunDigitForParagraph(main, int.Parse(c.ToString()));
-            CreateRunDigitForParagraph(main, RunDigit.StopDigitLength);
+            if (IsZeroFullStop)
+                CreateRunDigitForParagraph(main, RunDigitOrStop.StopDigitLength);
+            else
+                CreateRunDigitForParagraph(main, 10);
             Document.Blocks.Add(main);
         }
 
         private void CreateRunDigitForParagraph(Paragraph main, int digit)
         {
-            RunDigit run = new RunDigit(digit);
+            RunDigit run = NewRunDigitOrStop(digit);
             main.Inlines.Add(run);
         }
 
@@ -156,14 +188,36 @@ namespace PiApp
                     LoadParagraph(i++, line.Trim());
         }
 
+        private static string DefaultPoemWithStops()
+        {
+            return new StringBuilder()
+                            .AppendLine("Pie")
+                            .AppendLine()
+                            .AppendLine("I have a treat " +
+                            "comprised of tastes salty and sweet, " +
+                            "lovingly completed, " +
+                            "causing droolings for my lip, " +
+                            "diameter near excess so eating adds the hip " +
+                            "diameter and so filling reaffirms peace.")
+                            .AppendLine("No rational desserts (like a chocolate) provide a demand emulating the sugarplum pleasures now begging “shall I?”")
+                            .AppendLine("Baked infinity, no!")
+                            .AppendLine("Universes without pie’s immanence must know every existence to end.")
+                            .AppendLine("Dessert, treasure a rotten life.")
+                            .ToString();
+        }
+
         private static readonly Regex EmptyLineRegex = new Regex(@"^\s*(\d+\s*)+$", RegexOptions.Multiline);
         private static readonly Regex SplitStopRegex = new Regex(@"(\S)([\.\!\?])");
         private static readonly string SplitStopReplacement = "$1 $2";
-        private static string[] StringToPoemLoadFormat(string poem)
+        private string[] StringToPoemLoadFormat(string poem)
         {
-            return SplitStopRegex.Replace(
-                EmptyLineRegex.Replace(poem, string.Empty),
-                SplitStopReplacement)
+            if (IsZeroFullStop)
+                return SplitStopRegex.Replace(
+                    EmptyLineRegex.Replace(poem, string.Empty),
+                    SplitStopReplacement)
+                    .Split('\n');
+            else
+                return EmptyLineRegex.Replace(poem, string.Empty)
                 .Split('\n');
         }
 
@@ -173,6 +227,12 @@ namespace PiApp
             bool? result = filenameRequest.ShowDialog();
             if (result.HasValue && result.Value)
                 processFilename.Invoke(filenameRequest.FileName);
+        }
+
+        private void ClearAndLoadPoemFromFile(string filename)
+        {
+            Clear();
+            LoadPoemFromFile(filename);
         }
 
         private void LoadPoemFromFile(string filename)
@@ -222,7 +282,11 @@ namespace PiApp
         /// <param name="sentence"></param>
         private void LoadParagraph(int i, string sentence)
         {
-            Paragraph p = (Paragraph)Document.Blocks.ElementAt(2 + i);
+            int titleBlocks = 2;// 1;
+            //if (IsTitled)
+            //    ++titleBlocks;
+
+            Paragraph p = (Paragraph)Document.Blocks.ElementAt(titleBlocks + i);
             string[] words = sentence.Split(' ');
             for (int w = 0; w < words.Length; ++w)
                 if (p.Inlines.Count > w)
@@ -232,6 +296,30 @@ namespace PiApp
         private void SetWord(Inline inline, string word)
         {
             (inline as RunDigit)?.SetWord(word);
+        }
+
+        private void TitleMeaningWasToggled()
+        {
+            string poem = PoemToString();
+            ReloadDigits();
+            LoadPoemFromString(poem);
+        }
+        private void ZeroMeaningWasToggled()
+        {
+            string poem = PoemToString();
+            ReloadDigits();
+            LoadPoemFromString(poem);
+        }
+
+        private void ReloadDigits()
+        {
+            ClearDigits();
+            LoadDigits();
+        }
+
+        private void ClearDigits()
+        {
+            Document.Blocks.Clear();
         }
     }
 }

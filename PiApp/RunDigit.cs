@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 
@@ -11,9 +10,6 @@ namespace PiApp
     internal class RunDigit : Run
     {
         private static readonly Regex LettersRegex = new Regex(@"[a-zA-Z]");
-        private static readonly Regex StopsRegex = new Regex(@"[\.\?\!]");
-        internal static readonly int StopDigitLength = 0;
-        internal static readonly char StopDigitLengthChar = '0';
 
         public int Length { get; }
 
@@ -49,10 +45,13 @@ namespace PiApp
         {
             if (IsFocused)
                 this.Background = System.Windows.Media.Brushes.CornflowerBlue;
-            else if (Length == StopDigitLength)
-                this.Background = System.Windows.Media.Brushes.AliceBlue;
             else
-                this.Background = System.Windows.Media.Brushes.Transparent;
+                SetPassiveBackground();
+        }
+
+        protected virtual void SetPassiveBackground()
+        {
+            this.Background = System.Windows.Media.Brushes.Transparent;
         }
 
         private void TextHandler(object sender, TextCompositionEventArgs e)
@@ -122,13 +121,11 @@ namespace PiApp
             return true;
         }
 
-        public bool IsValid
+        public virtual bool IsValid
         {
             get
             {
                 return WordIsSet()
-                    && WordOrHasExactlyOneStop()
-                    && StopWordOrHasNoStops()
                     && WordHasLengthLetters();
             }
         }
@@ -143,27 +140,12 @@ namespace PiApp
             return LettersRegex.Matches(Word).Count == Length;
         }
 
-        private bool StopWordOrHasNoStops()
-        {
-            return Length == StopDigitLength
-                || !StopsRegex.IsMatch(Word);
-        }
-
-        private bool WordOrHasExactlyOneStop()
-        {
-            return Length != StopDigitLength
-                || StopsRegex.Matches(Word).Count == 1;
-        }
-
         public string Word { get; private set; }
 
         internal void SetWord(string word)
         {
             Word = word;
-            if (string.IsNullOrEmpty(Word))
-                NoWordText();
-            else
-                WordText();
+            SetTextFromWord();
 
             if (IsValid)
                 ValidFormat();
@@ -173,23 +155,15 @@ namespace PiApp
             SetBackground();
         }
 
-        private void WordText()
+        protected virtual void SetTextFromWord()
         {
             Text = string.Format(
-                (Length != StopDigitLength
-                ? " {0}" 
-                : "{0}"),
-                Word, Length);
+                string.IsNullOrEmpty(Word) 
+                ? " {1}" 
+                : " {0}",
+                 Word, Length);
         }
 
-        private void NoWordText()
-        {
-            Text = string.Format(
-                (Length != StopDigitLength
-                ? " {1}"
-                : ".{1}"), 
-                Word, Length);
-        }
 
         private void InvalidFormat()
         {

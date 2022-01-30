@@ -5,21 +5,32 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PiApp"
         mc:Ignorable="d"
-        Title="Pi Poetry" Height="450" Width="800">
+        Title="π Pi Poetry" Height="450" Width="800">
+    <Window.InputBindings>
+        <KeyBinding Modifiers="Ctrl" Key="S" Command="{Binding SavePoemCommand}"></KeyBinding>
+        <KeyBinding Modifiers="Ctrl" Key="O" Command="{Binding LoadPoemCommand}"></KeyBinding>
+    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <ToolBar Grid.Row="0">
-            <Button Command="{Binding SavePoemCommand}" CommandParameter="{Binding}" Content="💾 Save Poem"/>
-            <Button Command="{Binding LoadPoemCommand}" CommandParameter="{Binding}" Content="📂 Load Poem"/>
-            <Button Command="{Binding ClearPoemCommand}" CommandParameter="{Binding}" Content="❌ Clear"/>
+            <Button Command="{Binding SavePoemCommand}" CommandParameter="{Binding}" Content="💾 Save Poem" ToolTip="(Ctrl+S) Save poem as a text file that can be loaded"/>
+            <Button Command="{Binding LoadPoemCommand}" CommandParameter="{Binding}" Content="📂 Load Poem" ToolTip="(Ctrl+O) Clear poem and load from a text file"/>
+            <Button Command="{Binding LoadPoemOverlayCommand}" CommandParameter="{Binding}" Content="➕ Overlay Load" ToolTip="Load poem without clearing later lines"/>
+            <Separator/>
+            <Button Command="{Binding ClearPoemCommand}" CommandParameter="{Binding}" Content="❌ Clear" ToolTip="Change Formatting"/>
+            <Separator/>
+            <ToggleButton IsChecked="{Binding IsZeroFullStop}"
+                          Command="{Binding ToggleZeroSettingCommand}" CommandParameter="{Binding}" Content="↹ Zeros are .!?" ToolTip="Rule used for a zero: full stop punctuation or 10-letter word"/>
+            <ToggleButton IsChecked="{Binding IsTitled}"
+                          Command="{Binding ToggleTitleSettingCommand}" CommandParameter="{Binding}" Content="⚙ Title Display"/>
         </ToolBar>
         <GroupBox Grid.Row="1" Header="Editor" Name="editor">
-        <FlowDocumentReader Document="{Binding Document}" Name="reader" FontFamily="fixed">
+            <FlowDocumentReader Document="{Binding Document}" Name="reader" FontFamily="fixed" ViewingMode="Scroll">
 
-        </FlowDocumentReader>
+            </FlowDocumentReader>
         </GroupBox>
 
     </Grid>
